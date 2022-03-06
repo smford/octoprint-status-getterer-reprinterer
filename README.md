@@ -1,1 +1,1 @@
-# octoprint-status-getterer-to-table
+# octoprint-status-getterer-reprinterer

@@ -20,6 +20,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+const applicationName string = "octoprint-status-getterer-reprinterer"
+const applicationVersion string = "v0.1"
+
 type OctoprintStatus struct {
 	State struct {
 		Error string `json:"error"`
