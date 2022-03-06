@@ -1,0 +1,5 @@
+---
+statustoken: somepassword
+ttl: 10
+gettererurl: "http://172.28.0.10:54038"
+padding: 4
