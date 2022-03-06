@@ -8,6 +8,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"sort"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -16,7 +19,7 @@ import (
 )
 
 const applicationName string = "octoprint-status-getterer-reprinterer"
-const applicationVersion string = "v0.2"
+const applicationVersion string = "v0.3"
 
 type OctoprintStatus struct {
 	State struct {
@@ -46,14 +49,55 @@ type GettererPrinterList struct {
 }
 
 func init() {
-	flag.String("api", "statustoken", "Getterer API token")
+	flag.String("statustoken", "", "Getterer API token")
 	flag.String("gettererurl", "http://172.28.0.10:54038", "Getterer URL")
 	//flag.String("gettererurl", "http://127.0.0.1:54038", "Getterer URL")
 	flag.Int("ttl", 10, "TTL")
 	flag.Int("padding", 2, "Column padding")
+	flag.Bool("displayconfig", false, "Display configuration")
+	flag.Bool("help", false, "Display help")
+	flag.Bool("version", false, "Display version information")
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 	viper.BindPFlags(pflag.CommandLine)
+
+	if viper.GetBool("help") {
+		displayHelp()
+		os.Exit(0)
+	}
+
+	if viper.GetBool("version") {
+		fmt.Println(applicationName + " " + applicationVersion)
+		os.Exit(0)
+	}
+
+	configdir, configfile := filepath.Split(viper.GetString("config"))
+
+	// set default configuration directory to current directory
+	if configdir == "" {
+		configdir = "."
+	}
+
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(configdir)
+
+	config := strings.TrimSuffix(configfile, ".yaml")
+	config = strings.TrimSuffix(config, ".yml")
+
+	viper.SetConfigName(config)
+
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			log.Fatal("Config file not found")
+		} else {
+			log.Fatal("Config file was found but another error was discovered: ", err)
+		}
+	}
+
+	if viper.GetBool("displayconfig") {
+		displayConfig()
+		os.Exit(0)
+	}
 }
 
 func main() {
@@ -133,4 +177,28 @@ func getURL(url string) string {
 func prettyPrint(i interface{}) string {
 	s, _ := json.MarshalIndent(i, "", "\t")
 	return string(s)
+}
+
+// display help
+func displayHelp() {
+	message := `
+      --config [file]       Configuration file: /path/to/file.yaml (default: "./config.yaml")
+      --displayconfig       Display configuration
+      --help                Display help
+      --version             Display version`
+	fmt.Println(applicationName + " " + applicationVersion)
+	fmt.Println(message)
+}
+
+// display configuration
+func displayConfig() {
+	allmysettings := viper.AllSettings()
+	var keys []string
+	for k := range allmysettings {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		fmt.Println("CONFIG:", k, ":", allmysettings[k])
+	}
 }

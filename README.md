@@ -2,7 +2,6 @@
 
 
 ## Todo:
-- dockerise it
-- add config.yaml
 - update readme
-- present webapi
+- enable statustoken
+- sort printer list output
