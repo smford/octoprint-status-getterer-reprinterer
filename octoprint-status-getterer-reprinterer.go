@@ -19,7 +19,7 @@ import (
 )
 
 const applicationName string = "octoprint-status-getterer-reprinterer"
-const applicationVersion string = "v0.3"
+const applicationVersion string = "v0.4"
 
 type OctoprintStatus struct {
 	State struct {
@@ -50,8 +50,7 @@ type GettererPrinterList struct {
 
 func init() {
 	flag.String("statustoken", "", "Getterer API token")
-	flag.String("gettererurl", "http://172.28.0.10:54038", "Getterer URL")
-	//flag.String("gettererurl", "http://127.0.0.1:54038", "Getterer URL")
+	flag.String("gettererurl", "http://127.0.0.1:54038", "Getterer URL")
 	flag.Int("ttl", 10, "TTL")
 	flag.Int("padding", 2, "Column padding")
 	flag.Bool("displayconfig", false, "Display configuration")
@@ -102,7 +101,7 @@ func init() {
 
 func main() {
 
-	tempPrinterList := getURL("http://172.28.0.10:54038/printers?json=y")
+	tempPrinterList := getURL(viper.GetString("gettererurl") + "/printers?json=y")
 
 	allPrinters := GettererPrinterList{}
 	err := json.Unmarshal([]byte(tempPrinterList), &allPrinters)
