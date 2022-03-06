@@ -1,27 +1,22 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
-	//"log"
-	"encoding/json"
 	"io/ioutil"
 	"log"
-	"os"
-	//"path/filepath"
-	//"sort"
 	"net/http"
-	//"strings"
+	"os"
 	"text/tabwriter"
 	"time"
 
-	//"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 const applicationName string = "octoprint-status-getterer-reprinterer"
-const applicationVersion string = "v0.1"
+const applicationVersion string = "v0.2"
 
 type OctoprintStatus struct {
 	State struct {
@@ -63,15 +58,7 @@ func init() {
 
 func main() {
 
-	//tempPrinterList := getURL("http://127.0.0.1:54038/printers?json=y")
 	tempPrinterList := getURL("http://172.28.0.10:54038/printers?json=y")
-	//fmt.Println(prettyPrint(tempPrinterList))
-
-	/*
-		for _, line := range strings.Split(strings.TrimSuffix(tempPrinterList, "\n"), "\n") {
-			fmt.Printf("--%s|    %s\n", line, strings.TrimPrefix(line, ":"))
-		}
-	*/
 
 	allPrinters := GettererPrinterList{}
 	err := json.Unmarshal([]byte(tempPrinterList), &allPrinters)
@@ -80,18 +67,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	/*
-		fmt.Printf("====\n%s\n", prettyPrint(allPrinters))
-
-		fmt.Printf("=============\n%#v\n=========\n", allPrinters)
-		//fmt.Printf("ramonname=%s\ndesc=%s\n", allPrinters.Printers["ramon"].Name, allPrinters.Printers["ramon"].Desc)
-
-		spew.Dump(allPrinters.Printers)
-
-		fmt.Printf("length of allPrinters.Printers=%d\n", len(allPrinters.Printers))
-
-	*/
-
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, viper.GetInt("padding"), ' ', 0)
 	columnheadings := "Printer\tDesc\tStatus\tOther Status\tError\n"
 	fmt.Fprint(w, columnheadings)
@@ -99,9 +74,6 @@ func main() {
 	url := viper.GetString("gettererurl") + "/status/"
 
 	for _, something := range allPrinters.Printers {
-
-		//fmt.Printf("Name: %s      Desc: %s\n", something.Name, something.Desc)
-
 		result := getURL(url + something.Name + "?json=y")
 
 		name := something.Name
@@ -111,7 +83,7 @@ func main() {
 		currentPrinterState := OctoprintStatus{}
 		err = json.Unmarshal([]byte(result), &currentPrinterState)
 
-		fmt.Println(prettyPrint(currentPrinterState))
+		// fmt.Println(prettyPrint(currentPrinterState))
 
 		if err != nil {
 			log.Fatal(err)
@@ -123,40 +95,6 @@ func main() {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", name, desc, state, stateOther, printerError)
 
 	}
-	//os.Exit(0)
-
-	//==============
-
-	/*
-		fmt.Printf("ttl: %d\n", viper.GetInt("ttl"))
-		url := viper.GetString("gettererurl") + "/status/"
-
-		fmt.Println("Ramon:")
-		fmt.Printf("ramon getsingle=%s\n", getURL(url+"ramon"))
-
-		fmt.Println("\n\nEnder5:")
-		fmt.Printf("ender5 getsingle=%s\n", getURL(url+"ender5"))
-
-		fmt.Println("\n\nSandy (single):")
-		fmt.Printf("sandy getsingle=%s\n", getURL(url+"sandy"))
-
-		fmt.Println("\n\nSandy (json):")
-		result := getURL(url + "sandy?json=y")
-		fmt.Printf("sandy getsingle=%s\n", result)
-
-		currentPrinterState := OctoprintStatus{}
-		err = json.Unmarshal([]byte(result), &currentPrinterState)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Printf("Printer: %s\n", currentPrinterState.State.Text)
-
-		if currentPrinterState.State.Error == "" {
-			fmt.Printf("  Error: %s\n", currentPrinterState.State.Error)
-		}
-	*/
 
 	w.Flush()
 
